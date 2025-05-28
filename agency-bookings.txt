@@ -1,0 +1,26 @@
+3
+Sara Sobaseki
+21
+23
+BASIC
+170
+Donald Du Annes
+17
+21
+DELUXE
+355
+Renee Angymonne
+6
+6
+BASIC
+105
+Karen Kador
+12
+13
+EXECUTIVE
+230
+Soumi Khabara
+15
+16
+DELUXE
+282
