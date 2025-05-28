@@ -17,6 +17,7 @@ public class HotelMenu {
             System.out.println("\n1. Make General Guest Booking");
             System.out.println("2. Delete booking");
             System.out.println("3. Check room status for a day");
+            System.out.println("4. Create a business guest booking");
             System.out.println("0. Exit\n");
             int option = scanner.nextInt();
             scanner.nextLine();
@@ -30,6 +31,9 @@ public class HotelMenu {
                 case 3:
                 	checkRoomStatusForDay();
                 	break;
+                case 4:
+                    makeBusinessGuestBooking();
+                    break;
                 case 0:
                     System.out.println("Exiting. Thank you so much for using this.");
                     return;
@@ -227,6 +231,82 @@ public class HotelMenu {
             if (dayOfWeek != 5 && dayOfWeek != 6) return false;
         }
         return true;
+    }
+    
+    private void makeBusinessGuestBooking() {
+        System.out.print("Enter business name: ");
+        String businessName = scanner.nextLine();
+        System.out.print("Enter business contact person: ");
+        String contactPerson = scanner.nextLine();
+        Business business = hotel.getOrCreateBusiness(businessName, contactPerson);
+
+        System.out.print("Enter guest name: ");
+        String name = scanner.nextLine();
+        System.out.print("Enter guest phone number: ");
+        String phone = scanner.nextLine();
+        System.out.print("Enter member number: ");
+        int memberNumber = scanner.nextInt();
+        scanner.nextLine();
+
+        Guest guest = new BusinessGuest(name, phone, memberNumber, business);
+
+        System.out.print("Enter start day (1-30): ");
+        int startDay = scanner.nextInt();
+        System.out.print("Enter number of nights: ");
+        int nights = scanner.nextInt();
+        scanner.nextLine();
+
+        System.out.print("Enter room type (BASIC, DELUXE, EXECUTIVE): ");
+        String typeInput = scanner.nextLine().toUpperCase();
+        RoomType type;
+        switch (typeInput) {
+            case "BASIC": type = RoomType.BASIC_SINGLE_SUITE; break;
+            case "DELUXE": type = RoomType.DELUXE_SUITE; break;
+            case "EXECUTIVE": type = RoomType.EXECUTIVE_SUITE; break;
+            default:
+                System.out.println("Invalid room type.");
+                return;
+        }
+
+        System.out.print("Include breakfast? (yes/no): ");
+        boolean breakfast = scanner.nextLine().equalsIgnoreCase("yes");
+
+        Offer offer = null;
+        if ((type == RoomType.BASIC_SINGLE_SUITE || type == RoomType.DELUXE_SUITE) && nights == 3) {
+            System.out.print("Apply Midweek Offer (20% off)? (yes/no): ");
+            if (scanner.nextLine().equalsIgnoreCase("yes")) {
+                offer = new MidweekOffer();
+            }
+        } else if (type == RoomType.DELUXE_SUITE && isWeekendOnly(startDay, nights)) {
+            System.out.print("Apply Weekend Getaway Offer ($2 breakfasts)? (yes/no): ");
+            if (scanner.nextLine().equalsIgnoreCase("yes")) {
+                offer = new WeekendGetawayOffer();
+            }
+        }
+
+        double cost = hotel.calculateCost(type, startDay, nights, breakfast);
+        if (offer != null) {
+            int[] stayDays = new int[nights];
+            for (int i = 0; i < nights; i++) stayDays[i] = (startDay + i) % 7;
+            cost = offer.applyDiscount(cost, type, stayDays);
+        }
+
+        System.out.printf("Total cost: $%.2f%n", cost);
+        System.out.print("Enter deposit amount (minimum 50%): ");
+        double deposit = scanner.nextDouble();
+        scanner.nextLine();
+
+        if (deposit < cost * 0.5 || deposit > cost) {
+            System.out.println("Invalid deposit amount. Must be at least 50% and no more than total.");
+            return;
+        }
+
+        ExtendedBooking booked = hotel.addBusinessGuestBooking((BusinessGuest) guest, startDay, nights, type, cost, deposit, offer, breakfast);
+        if (booked != null) {
+            System.out.println("Business guest booking confirmed! ID: " + booked.getId());
+        } else {
+            System.out.println("No available room of selected type.");
+        }
     }
 
     // Program Commencement point
